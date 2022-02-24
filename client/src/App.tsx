@@ -8,11 +8,22 @@ import Button from '@mui/material/Button';
 import './App.css'
 import { createTheme, CssBaseline, ThemeOptions, ThemeProvider } from '@mui/material';
 import Backend from './services/backend';
+import React from 'react';
 
 function App() {
 
+  const [values, setValues] = React.useState({
+    username: '',
+    password: '',
+    timeslot: '',
+  });
+
+  const handleChange = (prop) => (event) => {
+    setValues({ ...values, [prop]: event.target.value });
+  };
+
   function handleClick() {
-    Backend.send()
+    Backend.send({ username: values.username, password: values.password, timeslot: values.timeslot });
   }
   
   const themeOptions: ThemeOptions = {
@@ -45,8 +56,20 @@ function App() {
       <div className="App">
         <Card sx={{ minWidth: 275, maxWidth: 800, margin: 'auto' }}>
           <CardActions>
-            <TextField id="outlined-basic" label="Username" variant="outlined" />
-            <TextField id="outlined-basic" label="Password" variant="outlined" />
+            <TextField 
+              value={values.username}
+              onChange={handleChange('username')}
+              id="outlined-basic" 
+              label="Username" 
+              variant="outlined"
+            />
+            <TextField 
+              value={values.password}
+              onChange={handleChange('password')}
+              id="outlined-basic" 
+              label="Password" 
+              variant="outlined" 
+            />
             <Button onClick={handleClick}>Hello</Button>
           </CardActions>
         </Card>

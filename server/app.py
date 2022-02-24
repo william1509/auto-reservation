@@ -2,6 +2,8 @@ from flask import Flask, request, send_file
 from flask_cors import CORS
 import json
 
+from reserver import reserve
+
 app = Flask(__name__)
 CORS(app)
 
@@ -9,8 +11,11 @@ CORS(app)
 def index():
     return 'Hello world'
 
-@app.route('/test', methods=['POST'])
+@app.route('/reserve', methods=['PUT'])
 def download():
+    data = request.get_json()
+    print(data)
+    #reserve(data['username'], data['password'], data['timeslot'])
     return "test"
 
 if __name__ == '__main__':
