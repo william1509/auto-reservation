@@ -1,0 +1,51 @@
+{
+    "monday": [
+        {
+            "username": "user1",
+            "password": "pass1",
+            "timeslot": "10:00-12:00"
+        }
+    ],
+    "tuesday": [
+        {
+            "username": "user1",
+            "password": "pass1",
+            "timeslot": "10:00-12:00"
+        }
+    ],
+    "wednesday": [
+        {
+            "username": "user1",
+            "password": "pass1",
+            "timeslot": "10:00-12:00"
+        }
+    ],
+    "thursday": [
+        {
+            "username": "user1",
+            "password": "pass1",
+            "timeslot": "10:00-12:00"
+        }
+    ],
+    "friday": [
+        {
+            "username": "user1",
+            "password": "pass1",
+            "timeslot": "10:00-12:00"
+        }
+    ],
+    "saturday": [
+        {
+            "username": "user1",
+            "password": "pass1",
+            "timeslot": "10:00-12:00"
+        }
+    ],
+    "sunday": [
+        {
+            "username": "user1",
+            "password": "pass1",
+            "timeslot": "10:00-12:00"
+        }
+    ]
+}

@@ -1,6 +1,7 @@
+import json
+
 from flask import Flask, request, send_file
 from flask_cors import CORS
-import json
 
 from reserver import reserve
 
@@ -11,7 +12,7 @@ CORS(app)
 def index():
     return 'Hello world'
 
-@app.route('/reserve', methods=['PUT'])
+@app.route('/add', methods=['PUT'])
 def download():
     data = request.get_json()
     print(data)

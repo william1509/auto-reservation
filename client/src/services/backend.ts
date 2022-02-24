@@ -8,8 +8,7 @@ const client = axios.create({
   });
 
 const send = (payload: Payload) => {
-    console.log(payload)
-    return client.put<Payload>("reserve", JSON.stringify(payload));
+    return client.put<Payload>("add", JSON.stringify(payload));
 };
 
 const Backend = {
