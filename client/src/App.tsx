@@ -20,27 +20,23 @@ import {
 import Backend from "./services/backend";
 import React from "react";
 import ReservationSlot from "./components/reservation-slot";
-import { Payload, Reservation } from './services/payload';
+import { Payload, Reservation } from "./services/payload";
 
 function App() {
   const Alert = React.forwardRef(function Alert(props, ref) {
     return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
   });
 
-  var res: Reservation[] = [
-    {
-      timeslot: "08:00",
-      day: "Monday",
-    },
-  ];
-
   const [values, setValues] = React.useState({
     username: "",
     password: "",
-    reservations: res,
   });
 
-  const [open, setOpen] = React.useState(false);
+  const [counter, setCounter] = React.useState(0);
+
+  const [reservations, setReservations] = React.useState<Reservation[]>([]);
+
+  const [isError, setError] = React.useState(false);
 
   const handleChange = (prop: string) => (event: any) => {
     setValues({ ...values, [prop]: event.target.value });
@@ -51,24 +47,48 @@ function App() {
       return;
     }
 
-    setOpen(false);
+    setError(false);
   };
 
   function handleClick() {
     for (const key in values) {
       if (values[key] === "") {
-        setOpen(true);
+        setError(true);
         return;
       }
     }
     Backend.send({
       username: values.username,
       password: values.password,
-      reservations: values.reservations,
+      reservations: reservations,
     });
   }
 
+  function addReservation() {
+    setCounter(counter + 1);
+    setReservations([...reservations, { day: "fdf", timeslot: "fdfd", id: counter }]);
+  }
 
+
+  function updateReservation(data: Reservation) {
+    reservations.forEach((item, index) => {
+      if (item.id === data.id) {
+        reservations[index] = data;
+      }
+    })
+    setReservations([...reservations]);
+
+  }
+
+  function deleteReservation(id: number) {
+
+    const items = reservations.filter(item => item.id !== id);
+    console.log(items)
+    setReservations(items);
+  }
+
+  React.useEffect(() => {
+  }, [values]);
 
   const themeOptions: ThemeOptions = {
     palette: {
@@ -99,7 +119,7 @@ function App() {
       <CssBaseline />
       <div className="App">
         <Snackbar
-          open={open}
+          open={isError}
           autoHideDuration={5000}
           onClose={handleClose}
           anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
@@ -114,7 +134,7 @@ function App() {
                 color="inherit"
                 size="small"
                 onClick={() => {
-                  setOpen(false);
+                  setError(false);
                 }}
               >
                 <CloseIcon fontSize="inherit" />
@@ -126,7 +146,7 @@ function App() {
           </Alert>
         </Snackbar>
         <Card sx={{ minWidth: 275, maxWidth: 800, margin: "auto" }}>
-          <CardHeader title="fffd" sx={{ textAlign: 'center' }}/>
+          <CardHeader title="fffd" sx={{ textAlign: "center" }} />
           <CardActions>
             <TextField
               value={values.username}
@@ -145,6 +165,13 @@ function App() {
             <Button
               variant="outlined"
               sx={{ marginLeft: "auto" }}
+              onClick={addReservation}
+            >
+              Add
+            </Button>
+            <Button
+              variant="outlined"
+              sx={{ marginLeft: "auto" }}
               onClick={handleClick}
             >
               Send
@@ -152,8 +179,8 @@ function App() {
           </CardActions>
           <CardContent>
             <div>
-              {res.map((data) => (
-                <ReservationSlot {...data}></ReservationSlot>
+              {reservations.map((data: Reservation) => (
+                <ReservationSlot key={data.id} id={data.id} updateReservation={updateReservation} deleteReservation={deleteReservation}></ReservationSlot>
               ))}
             </div>
           </CardContent>
