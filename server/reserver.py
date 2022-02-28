@@ -1,29 +1,47 @@
-from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.firefox.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
-import datetime
+import json
 
-def log(message):
-    f = open('logs.txt', 'a')
-    f.write("{} {}\n".format(datetime.datetime.now().strftime("%I:%M %B-%d-%Y"), message))
-    f.close()
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+from utils import getNextReservationDay
+
+
+def add_reservation(username, password, data):
+    day = data['day']
+    timeslot = data['timeslot']
+
+    with open("reservations.json",'r+') as file:
+        file_data = json.load(file)
+        res_for_day = file_data[day.lower()]
+        for res in res_for_day:
+            if res['username'] == username:
+                raise Exception("User {} already has a reservation for {}".format(username, day))
+        file_data[day.lower()].append({
+            'username': username,
+            'password': password,
+            'timeslot': timeslot
+        })
+        file.seek(0)
+        json.dump(file_data, file, indent = 4)
+
     
 def reserve(email: str, password: str, timeslot: str):
     options = Options()
-    options.binary_location = 'C:/Users/willi/AppData/Local/Mozilla Firefox/firefox.exe'
-    #options.add_argument('--headless')
-    driver = webdriver.Firefox(executable_path='geckodriver.exe', options=options)
+    # options.add_argument('--headless')
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
     driver.get("https://interactif.cepsum.umontreal.ca/CapNet/login.coba")
 
-    elem = driver.find_elements_by_xpath("//*[contains(@name, 'txtCodeUsager')]")
+    elem = driver.find_elements(by=By.XPATH, value="//*[contains(@name, 'txtCodeUsager')]")
     
     elem[0].clear()
     elem[0].send_keys(email)
 
-    elem = driver.find_elements_by_xpath("//*[contains(@name, 'txtMotDePasse')]")
+    elem = driver.find_elements(by=By.XPATH, value="//*[contains(@name, 'txtMotDePasse')]")
     elem[0].clear()
     elem[0].send_keys(password)
 
@@ -32,16 +50,19 @@ def reserve(email: str, password: str, timeslot: str):
     wait = WebDriverWait(driver, 10)
     wait.until(EC.presence_of_element_located((By.NAME, "lnkRESACT")))
 
-    elem = driver.find_elements_by_name("lnkRESACT")
+    elem = driver.find_elements(by=By.NAME, value="lnkRESACT")
     elem[0].click()
 
-    elem = driver.find_elements_by_xpath("//*[contains(@name, 'grdReservations-ajouter')]")
+    elem = driver.find_elements(by=By.XPATH, value="//*[contains(@name, 'grdReservations-ajouter')]")
     elem[0].click()
 
-    elem = driver.find_elements_by_xpath("//*[contains(@class, 'col-1 contenant')]")
+    wait = WebDriverWait(driver, 10)
+    wait.until(EC.presence_of_element_located((By.CLASS_NAME, "popup-content")))
+
+    elem = driver.find_elements(by=By.XPATH, value="//*[contains(@class, 'col-1 contenant')]")
     elem[2].click()
 
-    elem = driver.find_elements_by_xpath("//*[contains(@class, 'col-1 contenant avec-titre')]")
+    elem = driver.find_elements(by=By.XPATH, value="//*[contains(@class, 'col-1 contenant avec-titre')]")
 
     #Eliminate first element because it's a label
     elem = elem[1:4]
@@ -59,40 +80,12 @@ def reserve(email: str, password: str, timeslot: str):
                     try:
                         elem[0].click()
                         driver.close()  
-                        log("Reservation done at {}".format(timeslot))
-                        exit()
                     except Exception as e:
                         elem = driver.find_elements_by_xpath("//*[contains(@class, 'message erreur')]/span")
                         if "maximum" in elem[0].text:
-                            log('Max number of reservation reached')
-                    
-                    break
-            
-            break
-    log("Could not reserve for {} at {}".format(sectionDay, timeslot))
+                            break
+    driver.close()
 
-    driver.close()   
-
-def getNextReservationDay():
-    day = datetime.date.today().weekday()
-    if day == 0:
-        return "mercredi"
-    elif day == 1:
-        return "jeudi"
-    elif day == 2:
-        return "vendredi"
-    elif day == 3:
-        return "samedi"
-    elif day == 4:
-        return "dimanche"
-    elif day == 5:
-        return "lundi"
-    elif day == 6:
-        return "mardi"
-
-if __name__ == '__main__':
-    try:
-        log("Starting reservation")
-        reserve()
-    except Exception as e:
-        log("An error occured")
+                                
+if __name__ == "__main__":
+    reserve("william.martineau@polymtl.ca", "5wwaGuYdTt8tkpg", "16:10")

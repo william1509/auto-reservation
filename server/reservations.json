@@ -1,0 +1,15 @@
+{
+    "monday": [],
+    "tuesday": [
+        {
+            "username": "user",
+            "password": "ds",
+            "timeslot": "08:50, 09:50"
+        }
+    ],
+    "wednesday": [],
+    "thursday": [],
+    "friday": [],
+    "saturday": [],
+    "sunday": []
+}

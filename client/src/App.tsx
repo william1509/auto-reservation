@@ -21,6 +21,7 @@ import Backend from "./services/backend";
 import React from "react";
 import ReservationSlot from "./components/reservation-slot";
 import { Payload, Reservation } from "./services/payload";
+import { AxiosResponse } from "axios";
 
 function App() {
   const Alert = React.forwardRef(function Alert(props, ref) {
@@ -38,6 +39,8 @@ function App() {
 
   const [isError, setError] = React.useState(false);
 
+  const [errorMessage, setErrorMessage] = React.useState("");
+
   const handleChange = (prop: string) => (event: any) => {
     setValues({ ...values, [prop]: event.target.value });
   };
@@ -53,58 +56,85 @@ function App() {
   function handleClick() {
     for (const key in values) {
       if (values[key] === "") {
+        setErrorMessage("Please fill your username and password");
         setError(true);
         return;
       }
     }
+    for (const res in reservations) {
+      if (reservations[res].timeslot === "" || reservations[res].day === "") {
+        setErrorMessage("Please fill all of your reservations");
+        setError(true);
+        return;
+      }
+    }
+    setError(false);
     Backend.send({
       username: values.username,
       password: values.password,
       reservations: reservations,
+    }).then((res) => {
+      handleResquestResponse(res);
     });
+  }
+
+  function handleResquestResponse(res: AxiosResponse<string, any>) {
+
+    console.log(res)
+    if (res.status !== 200) {
+      setError(true);
+      setErrorMessage("Resquest error. Please try again");
+      return;
+    }
+
+    switch (res.data) {
+      case "DUPLICATE":
+        setError(true);
+        setErrorMessage("You already have a reservation for this day");
+        break;
+    }
   }
 
   function addReservation() {
     setCounter(counter + 1);
-    setReservations([...reservations, { day: "fdf", timeslot: "fdfd", id: counter }]);
+    setReservations([
+      ...reservations,
+      { day: "fdf", timeslot: "fdfd", id: counter },
+    ]);
   }
-
 
   function updateReservation(data: Reservation) {
     reservations.forEach((item, index) => {
       if (item.id === data.id) {
         reservations[index] = data;
       }
-    })
+    });
     setReservations([...reservations]);
-
   }
 
   function deleteReservation(id: number) {
-
-    const items = reservations.filter(item => item.id !== id);
-    console.log(items)
+    const items = reservations.filter((item) => item.id !== id);
+    console.log(items);
     setReservations(items);
   }
 
-  React.useEffect(() => {
-  }, [values]);
+  React.useEffect(() => {}, [values]);
 
   const themeOptions: ThemeOptions = {
     palette: {
       mode: "dark",
       primary: {
-        main: "#9C9500",
+        main: "#ffffff",
       },
       secondary: {
-        main: "#9C9500",
+        main: "#006bb6",
       },
       background: {
-        default: "#2f2f2f",
+        default: "#0f192c",
       },
       text: {
-        primary: "#9C9500",
-        secondary: "#9C9500",
+        primary: "#ffffff",
+        secondary: "#ffffff",
       },
     },
     typography: {
@@ -142,11 +172,11 @@ function App() {
             }
             sx={{ mb: 2 }}
           >
-            <AlertTitle>Please fill all the fields</AlertTitle>
+            <AlertTitle>{errorMessage}</AlertTitle>
           </Alert>
         </Snackbar>
-        <Card sx={{ minWidth: 275, maxWidth: 800, margin: "auto" }}>
-          <CardHeader title="fffd" sx={{ textAlign: "center" }} />
+        <Card sx={{ minWidth: 275, maxWidth: 800, margin: "auto", backgroundColor: "#0f192c"}}>
+          <CardHeader title="CEPSUM AUTO RESERVER" sx={{ textAlign: "center" }} />
           <CardActions>
             <TextField
               value={values.username}
@@ -180,7 +210,12 @@ function App() {
           <CardContent>
             <div>
               {reservations.map((data: Reservation) => (
-                <ReservationSlot key={data.id} id={data.id} updateReservation={updateReservation} deleteReservation={deleteReservation}></ReservationSlot>
+                <ReservationSlot
+                  key={data.id}
+                  id={data.id}
+                  updateReservation={updateReservation}
+                  deleteReservation={deleteReservation}
+                ></ReservationSlot>
               ))}
             </div>
           </CardContent>
