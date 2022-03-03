@@ -8,7 +8,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-from utils import getNextReservationDay
+from utils import getNextReservationDay, presence_of_n_elements
 
 
 def add_reservation(username, password, data):
@@ -33,7 +33,7 @@ def add_reservation(username, password, data):
 def reserve(email: str, password: str, timeslot: str):
     options = Options()
     # options.add_argument('--headless')
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager(version="98.0.4758.102").install()))
     driver.get("https://interactif.cepsum.umontreal.ca/CapNet/login.coba")
 
     elem = driver.find_elements(by=By.XPATH, value="//*[contains(@name, 'txtCodeUsager')]")
@@ -50,9 +50,11 @@ def reserve(email: str, password: str, timeslot: str):
     wait = WebDriverWait(driver, 10)
     wait.until(EC.presence_of_element_located((By.NAME, "lnkRESACT")))
 
+    wait.until(EC.presence_of_element_located((By.NAME, "lnkRESACT")))
     elem = driver.find_elements(by=By.NAME, value="lnkRESACT")
     elem[0].click()
 
+    wait.until(EC.presence_of_element_located((By.XPATH, "//*[contains(@name, 'grdReservations-ajouter')]")))
     elem = driver.find_elements(by=By.XPATH, value="//*[contains(@name, 'grdReservations-ajouter')]")
     elem[0].click()
 
@@ -62,11 +64,14 @@ def reserve(email: str, password: str, timeslot: str):
     elem = driver.find_elements(by=By.XPATH, value="//*[contains(@class, 'col-1 contenant')]")
     elem[2].click()
 
+    wait.until(presence_of_n_elements((By.XPATH, "//*[contains(@class, 'col-1 contenant avec-titre')]"), 4))
     elem = driver.find_elements(by=By.XPATH, value="//*[contains(@class, 'col-1 contenant avec-titre')]")
 
     #Eliminate first element because it's a label
     elem = elem[1:4]
 
+    print(elem)
+    
     for label in elem:
         sectionDay = label.find_element_by_tag_name("h4").text.split(',')[0].lower()
         if sectionDay == getNextReservationDay():

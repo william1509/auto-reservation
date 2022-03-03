@@ -4,10 +4,10 @@ class Reservation:
     timeslot: str
 
 class DayReservation:
-    monday: list[Reservation]
-    tuesday: list[Reservation]
-    wednesday: list[Reservation]
-    thursday: list[Reservation]
-    friday: list[Reservation]
-    saturday: list[Reservation]
-    sunday: list[Reservation]
+    monday: list
+    tuesday: list
+    wednesday: list
+    thursday: list
+    friday: list
+    saturday: list
+    sunday: list
