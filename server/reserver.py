@@ -11,16 +11,20 @@ from selenium.webdriver.support.ui import WebDriverWait
 from utils import getNextReservationDay, presence_of_n_elements
 
 
-def add_reservation(username, password, data):
-    day = data['day']
-    timeslot = data['timeslot']
+def add_reservation(data: dict) -> bool:
+    file = open("reservations.json",'r+')
 
-    with open("reservations.json",'r+') as file:
+    for reservation in data['reservations']:
+        day = reservation['day']
+        timeslot = reservation['timeslot']
+        username = reservation['username']
+        password = reservation['password']
+
         file_data = json.load(file)
         res_for_day = file_data[day.lower()]
         for res in res_for_day:
             if res['username'] == username:
-                raise Exception("User {} already has a reservation for {}".format(username, day))
+                return False
         file_data[day.lower()].append({
             'username': username,
             'password': password,
@@ -28,12 +32,38 @@ def add_reservation(username, password, data):
         })
         file.seek(0)
         json.dump(file_data, file, indent = 4)
+        return True
 
+def connect(username: str, password: str) -> bool:
+    options = Options()
+    options.add_argument('--headless')
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager(version="98.0.4758.102").install()), options=options)
+    driver.get("https://interactif.cepsum.umontreal.ca/CapNet/login.coba")
+
+    elem = driver.find_elements(by=By.XPATH, value="//*[contains(@name, 'txtCodeUsager')]")
+    
+    elem[0].clear()
+    elem[0].send_keys(username)
+
+    elem = driver.find_elements(by=By.XPATH, value="//*[contains(@name, 'txtMotDePasse')]")
+    elem[0].clear()
+    elem[0].send_keys(password)
+
+    old_url = driver.current_url
+
+    elem[0].send_keys(Keys.RETURN)
+    try:
+        WebDriverWait(driver, 1).until(lambda driver: old_url != driver.current_url)
+        return True
+    except:
+        return False
+    finally:
+        driver.close()
     
 def reserve(email: str, password: str, timeslot: str):
     options = Options()
-    # options.add_argument('--headless')
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager(version="98.0.4758.102").install()))
+    options.add_argument('--headless')
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager(version="98.0.4758.102").install(),), options=options)
     driver.get("https://interactif.cepsum.umontreal.ca/CapNet/login.coba")
 
     elem = driver.find_elements(by=By.XPATH, value="//*[contains(@name, 'txtCodeUsager')]")
@@ -68,29 +98,18 @@ def reserve(email: str, password: str, timeslot: str):
     elem = driver.find_elements(by=By.XPATH, value="//*[contains(@class, 'col-1 contenant avec-titre')]")
 
     #Eliminate first element because it's a label
-    elem = elem[1:4]
+    elem = elem[3].find_elements(by=By.TAG_NAME, value="a")
 
-    print(elem)
-    
-    for label in elem:
-        sectionDay = label.find_element_by_tag_name("h4").text.split(',')[0].lower()
-        if sectionDay == getNextReservationDay():
-            elem = label.find_elements_by_tag_name("a")
-            
-            for availableSlot in elem:
-                if timeslot in availableSlot.text:
-                    availableSlot.click()
+    for availableSlot in elem:
+        if timeslot in availableSlot.text:
+            availableSlot.click()
+            wait.until(EC.presence_of_element_located((By.XPATH, "//*[contains(@name, 'btnConfirmer')]")))
+            elem = driver.find_elements(by=By.XPATH, value="//*[contains(@name, 'btnConfirmer')]")
+            elem[0].click()
+            break
 
-                    elem = driver.find_elements_by_xpath("//*[contains(@name, 'btnConfirmer')]")
-                    try:
-                        elem[0].click()
-                        driver.close()  
-                    except Exception as e:
-                        elem = driver.find_elements_by_xpath("//*[contains(@class, 'message erreur')]/span")
-                        if "maximum" in elem[0].text:
-                            break
     driver.close()
 
                                 
 if __name__ == "__main__":
-    reserve("william.martineau@polymtl.ca", "5wwaGuYdTt8tkpg", "16:10")
+    connect("ff", "ff")

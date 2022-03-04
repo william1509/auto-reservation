@@ -37,9 +37,11 @@ function App() {
 
   const [reservations, setReservations] = React.useState<Reservation[]>([]);
 
-  const [isError, setError] = React.useState(false);
+  const [showAlert, setShowAlert] = React.useState(false);
 
   const [errorMessage, setErrorMessage] = React.useState("");
+
+  const [alertSeverity, setAlertSeverity] = React.useState("error");
 
   const handleChange = (prop: string) => (event: any) => {
     setValues({ ...values, [prop]: event.target.value });
@@ -50,25 +52,27 @@ function App() {
       return;
     }
 
-    setError(false);
+    setShowAlert(false);
   };
 
   function handleClick() {
     for (const key in values) {
       if (values[key] === "") {
         setErrorMessage("Please fill your username and password");
-        setError(true);
+        setAlertSeverity("error");
+        setShowAlert(true);
         return;
       }
     }
     for (const res in reservations) {
       if (reservations[res].timeslot === "" || reservations[res].day === "") {
         setErrorMessage("Please fill all of your reservations");
-        setError(true);
+        setAlertSeverity("error");
+        setShowAlert(true);
         return;
       }
     }
-    setError(false);
+    setShowAlert(false);
     Backend.send({
       username: values.username,
       password: values.password,
@@ -79,18 +83,27 @@ function App() {
   }
 
   function handleResquestResponse(res: AxiosResponse<string, any>) {
-
-    console.log(res)
     if (res.status !== 200) {
-      setError(true);
+      setShowAlert(true);
       setErrorMessage("Resquest error. Please try again");
       return;
     }
 
     switch (res.data) {
       case "DUPLICATE":
-        setError(true);
+        setShowAlert(true);
+        setAlertSeverity("error");
         setErrorMessage("You already have a reservation for this day");
+        break;
+      case "INVALID":
+        setShowAlert(true);
+        setAlertSeverity("error");
+        setErrorMessage("Username and password do not match");
+        break;
+      case "OK":
+        setShowAlert(true);
+        setAlertSeverity("success");
+        setErrorMessage("Reservation successful");
         break;
     }
   }
@@ -149,13 +162,13 @@ function App() {
       <CssBaseline />
       <div className="App">
         <Snackbar
-          open={isError}
+          open={showAlert}
           autoHideDuration={5000}
           onClose={handleClose}
           anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
         >
           <Alert
-            severity="error"
+            severity={alertSeverity}
             variant="filled"
             icon={<ErrorIcon fontSize="inherit" />}
             action={
@@ -164,7 +177,7 @@ function App() {
                 color="inherit"
                 size="small"
                 onClick={() => {
-                  setError(false);
+                  setShowAlert(false);
                 }}
               >
                 <CloseIcon fontSize="inherit" />
@@ -175,8 +188,18 @@ function App() {
             <AlertTitle>{errorMessage}</AlertTitle>
           </Alert>
         </Snackbar>
-        <Card sx={{ minWidth: 275, maxWidth: 800, margin: "auto", backgroundColor: "#0f192c"}}>
-          <CardHeader title="CEPSUM AUTO RESERVER" sx={{ textAlign: "center" }} />
+        <Card
+          sx={{
+            minWidth: 275,
+            maxWidth: 800,
+            margin: "auto",
+            backgroundColor: "#0f192c",
+          }}
+        >
+          <CardHeader
+            title="CEPSUM AUTO RESERVER"
+            sx={{ textAlign: "center" }}
+          />
           <CardActions>
             <TextField
               value={values.username}
@@ -195,29 +218,34 @@ function App() {
             <Button
               variant="outlined"
               sx={{ marginLeft: "auto" }}
-              onClick={addReservation}
-            >
-              Add
-            </Button>
-            <Button
-              variant="outlined"
-              sx={{ marginLeft: "auto" }}
               onClick={handleClick}
             >
               Send
             </Button>
           </CardActions>
-          <CardContent>
-            <div>
-              {reservations.map((data: Reservation) => (
-                <ReservationSlot
-                  key={data.id}
-                  id={data.id}
-                  updateReservation={updateReservation}
-                  deleteReservation={deleteReservation}
-                ></ReservationSlot>
-              ))}
-            </div>
+          <CardContent
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexDirection: "column",
+            }}
+          >
+            {reservations.map((data: Reservation) => (
+              <ReservationSlot
+                key={data.id}
+                id={data.id}
+                updateReservation={updateReservation}
+                deleteReservation={deleteReservation}
+              ></ReservationSlot>
+            ))}
+            <Button
+              variant="outlined"
+              sx={{ margin: "auto" }}
+              onClick={addReservation}
+            >
+              Add
+            </Button>
           </CardContent>
         </Card>
       </div>

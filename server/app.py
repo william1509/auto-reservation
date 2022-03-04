@@ -3,7 +3,7 @@ import json
 from flask import Flask, request, send_file, make_response
 from flask_cors import CORS
 
-from reserver import reserve, add_reservation
+from reserver import connect, add_reservation
 
 app = Flask(__name__)
 CORS(app)
@@ -13,16 +13,17 @@ def index():
     return 'Hello world'
 
 @app.route('/add', methods=['PUT'])
-def download():
+def add():
     data = request.get_json()
-    try:
-        for res in data['reservations']:
-            add_reservation(data['username'], data['password'], res)
-        resp = make_response("OK", 200)
-        return resp
-    except Exception as e:
-        resp = make_response("DUPLICATE", 200)
-        return resp
+
+    if not connect(data['username'], data['password']):
+        return make_response("INVALID", 200)
+        
+    if not add_reservation(data):
+        return make_response("DUPLICATE", 200)
+    
+    return make_response("OK", 200)
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
     
