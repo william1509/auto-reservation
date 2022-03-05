@@ -13,12 +13,12 @@ from utils import getNextReservationDay, presence_of_n_elements
 
 def add_reservation(data: dict) -> bool:
     file = open("reservations.json",'r+')
-
+    username = data['username']
+    password = data['password']
     for reservation in data['reservations']:
         day = reservation['day']
         timeslot = reservation['timeslot']
-        username = reservation['username']
-        password = reservation['password']
+
 
         file_data = json.load(file)
         res_for_day = file_data[day.lower()]

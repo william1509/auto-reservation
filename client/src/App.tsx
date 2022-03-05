@@ -96,6 +96,9 @@ function App() {
     }).then((res) => {
       setLoadingSend(false);
       handleResquestResponse(res);
+    }).catch((err) => {
+      setLoadingSend(false);
+      showAlertMessage(err.message, "error");
     });
   }
 
@@ -151,6 +154,7 @@ function App() {
 
   const deleteReservation = (id: number) => {
     const items = reservations.filter((item) => item.id !== id);
+    setCounter(counter - 1);
     setReservations(items);
   }
 
@@ -247,6 +251,7 @@ function App() {
             />
             <TextField
               value={values.password}
+              type="password"
               onChange={handleChange("password")}
               id="outlined-basic"
               label="Password"

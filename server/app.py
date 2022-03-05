@@ -15,7 +15,6 @@ def index():
 @app.route('/add', methods=['PUT'])
 def add():
     data = request.get_json()
-
     if not connect(data['username'], data['password']):
         return make_response("INVALID", 200)
         
