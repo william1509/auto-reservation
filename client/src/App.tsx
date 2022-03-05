@@ -8,10 +8,13 @@ import IconButton from "@mui/material/IconButton";
 import MuiAlert from "@mui/material/Alert";
 import CloseIcon from "@mui/icons-material/Close";
 import ErrorIcon from "@mui/icons-material/Error";
+import InfoIcon from "@mui/icons-material/Info";
 import "./App.css";
 import {
   AlertTitle,
+  Box,
   CardHeader,
+  CircularProgress,
   createTheme,
   CssBaseline,
   ThemeOptions,
@@ -22,6 +25,8 @@ import React from "react";
 import ReservationSlot from "./components/reservation-slot";
 import { Payload, Reservation } from "./services/payload";
 import { AxiosResponse } from "axios";
+import PopupDialog from "./components/popup-dialog/popup-dialog";
+import { CONSTANTS } from './constants';
 
 function App() {
   const Alert = React.forwardRef(function Alert(props, ref) {
@@ -32,6 +37,10 @@ function App() {
     username: "",
     password: "",
   });
+
+  const [showingPopup, setShowingPopup] = React.useState(false);
+
+  const [loadingSend, setLoadingSend] = React.useState(false);
 
   const [counter, setCounter] = React.useState(0);
 
@@ -55,34 +64,46 @@ function App() {
     setShowAlert(false);
   };
 
-  function handleClick() {
+  const showAlertMessage = (message: string, severity: string) => {
+    setErrorMessage(message);
+    setAlertSeverity(severity);
+    setShowAlert(true);
+  };
+
+  const handleClick = () => {
     for (const key in values) {
       if (values[key] === "") {
-        setErrorMessage("Please fill your username and password");
-        setAlertSeverity("error");
-        setShowAlert(true);
+        showAlertMessage("Please fill your username and password", "error");
         return;
       }
+    }
+    if (reservations.length === 0) {
+      showAlertMessage("Please fill at least one reservation", "error");
+      return;
     }
     for (const res in reservations) {
       if (reservations[res].timeslot === "" || reservations[res].day === "") {
-        setErrorMessage("Please fill all of your reservations");
-        setAlertSeverity("error");
-        setShowAlert(true);
+        showAlertMessage("Please fill all of your reservations", "error");
         return;
       }
     }
+    setLoadingSend(true);
     setShowAlert(false);
     Backend.send({
       username: values.username,
       password: values.password,
       reservations: reservations,
     }).then((res) => {
+      setLoadingSend(false);
       handleResquestResponse(res);
     });
   }
 
-  function handleResquestResponse(res: AxiosResponse<string, any>) {
+  const showPopup = () => {
+    setShowingPopup(true);
+  }
+
+  const handleResquestResponse = (res: AxiosResponse<string, any>) => {
     if (res.status !== 200) {
       setShowAlert(true);
       setErrorMessage("Resquest error. Please try again");
@@ -108,15 +129,18 @@ function App() {
     }
   }
 
-  function addReservation() {
+  const addReservation = () => {
+    if (counter + 1 > 7) {
+      setShowAlert(true);
+      setAlertSeverity("error");
+      setErrorMessage("You can't have more than 7 reservations");
+      return;
+    }
     setCounter(counter + 1);
-    setReservations([
-      ...reservations,
-      { day: "fdf", timeslot: "fdfd", id: counter },
-    ]);
+    setReservations([...reservations, { day: "", timeslot: "", id: counter }]);
   }
 
-  function updateReservation(data: Reservation) {
+  const updateReservation = (data: Reservation) => {
     reservations.forEach((item, index) => {
       if (item.id === data.id) {
         reservations[index] = data;
@@ -125,13 +149,10 @@ function App() {
     setReservations([...reservations]);
   }
 
-  function deleteReservation(id: number) {
+  const deleteReservation = (id: number) => {
     const items = reservations.filter((item) => item.id !== id);
-    console.log(items);
     setReservations(items);
   }
-
-  React.useEffect(() => {}, [values]);
 
   const themeOptions: ThemeOptions = {
     palette: {
@@ -151,7 +172,7 @@ function App() {
       },
     },
     typography: {
-      fontFamily: "Raleway",
+      fontFamily: "",
     },
   };
 
@@ -161,6 +182,12 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <div className="App">
+        <PopupDialog 
+          open={showingPopup}
+          title="Information"
+          content={CONSTANTS.DISCLAIMER}
+          closePopup={() => setShowingPopup(false)}
+        />
         <Snackbar
           open={showAlert}
           autoHideDuration={5000}
@@ -197,10 +224,20 @@ function App() {
           }}
         >
           <CardHeader
-            title="CEPSUM AUTO RESERVER"
-            sx={{ textAlign: "center" }}
+            action={
+              <IconButton aria-label="info" onClick={showPopup}>
+                <InfoIcon />
+              </IconButton>
+            }
+            title="CEPSUM"
+            subheader="Automatically reserve your timeslots !"
           />
-          <CardActions>
+
+          <CardActions
+            style={{
+              display: "flex",
+            }}
+          >
             <TextField
               value={values.username}
               onChange={handleChange("username")}
@@ -215,13 +252,17 @@ function App() {
               label="Password"
               variant="outlined"
             />
-            <Button
-              variant="outlined"
-              sx={{ marginLeft: "auto" }}
-              onClick={handleClick}
-            >
-              Send
-            </Button>
+            <div style={{ marginLeft: "auto" }}>
+              {loadingSend ? (
+                <Box>
+                  <CircularProgress />
+                </Box>
+              ) : (
+                <Button variant="outlined" onClick={handleClick}>
+                  Send
+                </Button>
+              )}
+            </div>
           </CardActions>
           <CardContent
             style={{
@@ -232,12 +273,13 @@ function App() {
             }}
           >
             {reservations.map((data: Reservation) => (
-              <ReservationSlot
-                key={data.id}
-                id={data.id}
-                updateReservation={updateReservation}
-                deleteReservation={deleteReservation}
-              ></ReservationSlot>
+              <Box style={{ margin: "10px" }} key={data.id}>
+                <ReservationSlot
+                  id={data.id}
+                  updateReservation={updateReservation}
+                  deleteReservation={deleteReservation}
+                />
+              </Box>
             ))}
             <Button
               variant="outlined"
