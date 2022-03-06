@@ -32,8 +32,16 @@ const PopupDialog = (props: PopupDialogProps) => {
           {props.title}
         </DialogTitle>
         <DialogContent>
-          <DialogContentText id="alert-dialog-description">
+          <DialogContentText 
+          id="alert-dialog-description"
+          >
             {props.content}
+            <a 
+            href="https://github.com/william1509/auto-reservation"
+            style={{ color: '#8ebf42' }}
+            >
+              here
+            </a>
           </DialogContentText>
         </DialogContent>
         <DialogActions>

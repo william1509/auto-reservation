@@ -1,4 +1,8 @@
+import calendar
+from datetime import date
 import json
+import schedule
+import time
 
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -8,7 +12,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-from utils import getNextReservationDay, presence_of_n_elements
+from utils import presence_of_n_elements
 
 
 def add_reservation(data: dict) -> bool:
@@ -62,7 +66,7 @@ def connect(username: str, password: str) -> bool:
     
 def reserve(email: str, password: str, timeslot: str):
     options = Options()
-    options.add_argument('--headless')
+    #options.add_argument('--headless')
     driver = webdriver.Chrome(service=Service(ChromeDriverManager(version="98.0.4758.102").install(),), options=options)
     driver.get("https://interactif.cepsum.umontreal.ca/CapNet/login.coba")
 
@@ -100,8 +104,9 @@ def reserve(email: str, password: str, timeslot: str):
     #Eliminate first element because it's a label
     elem = elem[3].find_elements(by=By.TAG_NAME, value="a")
 
+    start_time = timeslot.split(', ')[0]
     for availableSlot in elem:
-        if timeslot in availableSlot.text:
+        if start_time in availableSlot.text:
             availableSlot.click()
             wait.until(EC.presence_of_element_located((By.XPATH, "//*[contains(@name, 'btnConfirmer')]")))
             elem = driver.find_elements(by=By.XPATH, value="//*[contains(@name, 'btnConfirmer')]")
@@ -110,6 +115,20 @@ def reserve(email: str, password: str, timeslot: str):
 
     driver.close()
 
-                                
+def job():
+    file = open('reservations.json','r')
+    reservations = json.load(file)
+    next_date = (date.today().weekday() + 2) % 7
+    current_day = calendar.day_name[next_date]
+    print(current_day)
+    for reservation in reservations[current_day.lower()]:
+        try:
+            reserve(reservation['username'], reservation['password'], reservation['timeslot'])
+        except:
+            print("Could not reserve for " + reservation['username'])
+                 
 if __name__ == "__main__":
-    connect("ff", "ff")
+    schedule.every().day.at("19:05").do(job)
+    while True:
+        schedule.run_pending()
+        time.sleep(30)
